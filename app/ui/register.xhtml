@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>Create account — InvoiceOS</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <link rel="stylesheet" type="text/css" href="/ui/static/css/app.css" />
+</head>
+<body>
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="brand-line"><span class="logo">I</span><h1>InvoiceOS</h1></div>
+      <p class="sub">Create your organization workspace.</p>
+      <form id="register-form" action="" method="post">
+        <div class="field">
+          <label for="org-name">Organization name</label>
+          <input id="org-name" name="organization_name" type="text" autocomplete="organization" />
+        </div>
+        <div class="field">
+          <label for="full-name">Your full name</label>
+          <input id="full-name" name="full_name" type="text" autocomplete="name" />
+        </div>
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" name="email" type="text" autocomplete="username" />
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" autocomplete="new-password" />
+        </div>
+        <div class="btn-row" style="margin-top: 18px;">
+          <button class="btn primary" type="submit">Create account</button>
+        </div>
+      </form>
+      <p class="muted" style="margin-top: 16px;">Already registered? <a href="login.xhtml">Sign in</a></p>
+    </div>
+  </div>
+  <script type="text/javascript" src="/ui/static/js/app.js"></script>
+  <script type="text/javascript" src="/ui/static/js/register.js"></script>
+</body>
+</html>

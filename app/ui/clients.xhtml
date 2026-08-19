@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>Clients — InvoiceOS</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <link rel="stylesheet" type="text/css" href="/ui/static/css/app.css" />
+</head>
+<body data-page="clients">
+  <div class="layout">
+    <nav id="sidebar"></nav>
+    <div class="main">
+      <header id="topbar"></header>
+      <main class="content" id="content"></main>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="client-modal">
+    <div class="modal">
+      <h3 id="client-modal-title">New client</h3>
+      <form id="client-form" action="" method="post">
+        <div class="form-grid">
+          <div class="field full">
+            <label class="required" for="c-name">Name</label>
+            <input id="c-name" type="text" />
+          </div>
+          <div class="field">
+            <label for="c-email">Email</label>
+            <input id="c-email" type="text" />
+          </div>
+          <div class="field">
+            <label for="c-phone">Phone</label>
+            <input id="c-phone" type="text" />
+          </div>
+          <div class="field full">
+            <label for="c-address">Address</label>
+            <input id="c-address" type="text" />
+          </div>
+          <div class="field full">
+            <label for="c-notes">Notes</label>
+            <textarea id="c-notes"></textarea>
+          </div>
+          <div class="field full" id="c-active-wrap" style="display: none;">
+            <label for="c-active"><input id="c-active" type="checkbox" checked="checked" /> Active</label>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn" id="c-cancel">Cancel</button>
+          <button type="submit" class="btn primary">Save client</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="invite-modal">
+    <div class="modal">
+      <h3 id="invite-modal-title">Invite client</h3>
+      <form id="invite-form" action="" method="post">
+        <div class="form-grid">
+          <div class="field full">
+            <label for="c-name">Client</label>
+            <input id="invite-client-name" type="text" disabled="disabled" />
+          </div>
+          <div class="field full">
+            <label class="required" for="invite-email">Account email</label>
+            <input id="invite-email" type="text" />
+          </div>
+          <div class="field full">
+            <label class="required" for="invite-password">Password</label>
+            <input id="invite-password" type="password" autocomplete="new-password" />
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn" id="invite-cancel">Cancel</button>
+          <button type="submit" class="btn primary">Invite client</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="text/javascript" src="/ui/static/js/app.js"></script>
+  <script type="text/javascript" src="/ui/static/js/clients.js"></script>
+</body>
+</html>

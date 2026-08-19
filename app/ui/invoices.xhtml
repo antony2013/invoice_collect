@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>Invoices — InvoiceOS</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <link rel="stylesheet" type="text/css" href="/ui/static/css/app.css" />
+</head>
+<body data-page="invoices">
+  <div class="layout">
+    <nav id="sidebar"></nav>
+    <div class="main">
+      <header id="topbar"></header>
+      <main class="content" id="content"></main>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="create-modal">
+    <div class="modal wide">
+      <h3>Create invoice</h3>
+      <form id="create-form" action="" method="post">
+        <div class="form-grid">
+          <div class="field">
+            <label class="required" for="inv-client">Client</label>
+            <select id="inv-client"></select>
+          </div>
+          <div class="field">
+            <label class="required" for="inv-date">Invoice date</label>
+            <input id="inv-date" type="date" />
+          </div>
+          <div class="field">
+            <label for="inv-currency">Currency</label>
+            <input id="inv-currency" type="text" maxlength="3" value="USD" />
+          </div>
+          <div class="field">
+            <label for="inv-number">Invoice number (optional)</label>
+            <input id="inv-number" type="text" />
+          </div>
+          <div class="field full">
+            <label for="inv-notes">Notes</label>
+            <textarea id="inv-notes"></textarea>
+          </div>
+          <div class="field full">
+            <div class="legend"><span class="li">Line items</span></div>
+            <div class="item-rows" id="item-rows"></div>
+            <button type="button" class="btn small" id="add-item" style="margin-top: 8px;">+ Add item</button>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn" id="create-cancel">Cancel</button>
+          <button type="submit" class="btn primary">Create invoice</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="text/javascript" src="/ui/static/js/app.js"></script>
+  <script type="text/javascript" src="/ui/static/js/invoices.js"></script>
+</body>
+</html>

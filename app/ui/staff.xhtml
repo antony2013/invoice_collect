@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>Staff — InvoiceOS</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <link rel="stylesheet" type="text/css" href="/ui/static/css/app.css" />
+</head>
+<body data-page="staff">
+  <div class="layout">
+    <nav id="sidebar"></nav>
+    <div class="main">
+      <header id="topbar"></header>
+      <main class="content" id="content"></main>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="staff-modal">
+    <div class="modal">
+      <h3 id="staff-modal-title">New staff member</h3>
+      <form id="staff-form" action="" method="post">
+        <div class="form-grid">
+          <div class="field full">
+            <label class="required" for="s-name">Full name</label>
+            <input id="s-name" type="text" />
+          </div>
+          <div class="field full" id="s-email-wrap">
+            <label class="required" for="s-email">Email</label>
+            <input id="s-email" type="text" autocomplete="off" />
+          </div>
+          <div class="field full">
+            <label id="s-pass-label" class="required" for="s-pass">Password</label>
+            <input id="s-pass" type="password" autocomplete="new-password" />
+          </div>
+          <div class="field full" id="s-active-wrap" style="display: none;">
+            <label for="s-active"><input id="s-active" type="checkbox" checked="checked" /> Active</label>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn" id="s-cancel">Cancel</button>
+          <button type="submit" class="btn primary">Save staff</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="text/javascript" src="/ui/static/js/app.js"></script>
+  <script type="text/javascript" src="/ui/static/js/staff.js"></script>
+</body>
+</html>
