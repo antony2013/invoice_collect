@@ -13,7 +13,6 @@ import {
 } from "react-native";
 import { ImageManipulator, SaveFormat } from "expo-image-manipulator";
 import * as Print from "expo-print";
-import { File, Paths } from "expo-file-system";
 import { uploadInvoice } from "../api";
 import { ScanPage } from "../types";
 
@@ -113,12 +112,8 @@ export default function ScanReviewScreen({ pages, onDone, onCancel }: Props) {
       const pdfUri = await generatePdf(items);
 
       const ts = new Date().toISOString().replace(/[:.]/g, "-");
-      const fileName = `invoice-scan-${ts}.pdf`;
-      const dest = new File(Paths.cache, fileName);
-      await new File(pdfUri).copy(dest);
-
       setProgress("Uploading...");
-      await uploadInvoice(dest.uri, fileName, notes || undefined);
+      await uploadInvoice(pdfUri, `invoice-scan-${ts}.pdf`, notes || undefined);
 
       Alert.alert("Uploaded", "Your scanned invoice (PDF) has been uploaded.", [
         { text: "OK", onPress: onDone },

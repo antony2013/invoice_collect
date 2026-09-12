@@ -84,8 +84,11 @@ export async function uploadInvoice(
   notes?: string
 ): Promise<Invoice> {
   const formData = new FormData();
-  const file = new File(fileUri);
-  formData.append("upload", file, fileName);
+  formData.append("upload", {
+    uri: fileUri,
+    name: fileName,
+    type: "application/pdf",
+  } as any);
   if (notes) {
     formData.append("notes", notes);
   }
