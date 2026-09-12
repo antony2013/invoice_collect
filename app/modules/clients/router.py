@@ -97,7 +97,7 @@ def create_client(payload: ClientCreate, owner: Owner, db: DbDep) -> ClientDetai
     """Create a client in the owner's organization."""
     client = Client(organization_id=owner.organization_id, **payload.model_dump())
     db.add(client)
-    db.commit()
+    db.flush()
     db.refresh(client)
 
     write_audit_log(
@@ -221,7 +221,7 @@ def invite_client(
         is_active=client.is_active,
     )
     db.add(user)
-    db.commit()
+    db.flush()
 
     write_audit_log(
         db,

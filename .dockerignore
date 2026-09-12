@@ -9,8 +9,13 @@ __pycache__/
 .ruff_cache/
 data/
 tests/
+graft/
 .git/
 .gitignore
 Dockerfile
 docker-compose.yml
 *.md
+.idea/
+.vscode/
+mobile/
+SECURITY_AUDIT_REPORT.md

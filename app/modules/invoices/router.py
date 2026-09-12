@@ -231,8 +231,6 @@ def create_invoice(
     db.add(invoice)
     db.flush()
     _build_items(db, invoice, payload.items)
-    db.commit()
-    db.expire(invoice)
 
     write_audit_log(
         db,
@@ -243,6 +241,7 @@ def create_invoice(
         resource_id=invoice.id,
     )
     db.commit()
+    db.expire(invoice)
 
     return _to_detail_response(db, invoice)
 

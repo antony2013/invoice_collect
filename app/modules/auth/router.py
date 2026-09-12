@@ -3,11 +3,12 @@ from __future__ import annotations
 import uuid
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Request, status
 from sqlalchemy import delete, select
 
 from app.core.audit import write_audit_log
 from app.core.deps import BearerToken, CurrentUser, DbDep
+from app.core.ratelimit import LoginRateLimit
 from app.core.security import (
     create_access_token,
     decode_access_token,
@@ -24,6 +25,15 @@ from app.modules.auth.schemas import (
 )
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+
+def _client_ip(request: Request) -> str | None:
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    if request.client:
+        return request.client.host
+    return None
 
 
 def _to_user_response(user: User) -> UserResponse:
@@ -60,7 +70,7 @@ def _build_token_response(user: User) -> TokenResponse:
     response_model=TokenResponse,
     status_code=status.HTTP_201_CREATED,
 )
-def register(payload: RegisterRequest, db: DbDep) -> TokenResponse:
+def register(payload: RegisterRequest, db: DbDep, request: Request) -> TokenResponse:
     """Register a new organization and its OWNER account."""
     if db.scalar(select(User).where(User.email == payload.email)) is not None:
         raise HTTPException(
@@ -77,7 +87,7 @@ def register(payload: RegisterRequest, db: DbDep) -> TokenResponse:
         role=UserRole.OWNER,
     )
     db.add(organization)
-    db.commit()
+    db.flush()
     db.refresh(user)
 
     write_audit_log(
@@ -87,6 +97,7 @@ def register(payload: RegisterRequest, db: DbDep) -> TokenResponse:
         action="auth.register",
         resource_type="user",
         resource_id=user.id,
+        ip_address=_client_ip(request),
     )
     db.commit()
 
@@ -94,7 +105,12 @@ def register(payload: RegisterRequest, db: DbDep) -> TokenResponse:
 
 
 @router.post("/login", response_model=TokenResponse)
-def login(payload: LoginRequest, db: DbDep) -> TokenResponse:
+def login(
+    _: LoginRateLimit,
+    payload: LoginRequest,
+    db: DbDep,
+    request: Request,
+) -> TokenResponse:
     """Authenticate with email/password and receive an access token."""
     user = db.scalar(select(User).where(User.email == payload.email))
     if user is None or not verify_password(payload.password, user.password_hash):
@@ -117,6 +133,7 @@ def login(payload: LoginRequest, db: DbDep) -> TokenResponse:
         action="auth.login",
         resource_type="user",
         resource_id=user.id,
+        ip_address=_client_ip(request),
     )
     db.commit()
 

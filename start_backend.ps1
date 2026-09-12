@@ -1,0 +1,1 @@
+Start-Process -FilePath "uv" -ArgumentList @("run","uvicorn","app.main:app","--host","0.0.0.0","--port","8001") -WorkingDirectory "E:\invoice_collect" -RedirectStandardOutput "E:\invoice_collect\uvicorn.out.log" -RedirectStandardError "E:\invoice_collect\uvicorn.log" -WindowStyle Hidden -PassThru | Select-Object -ExpandProperty Id

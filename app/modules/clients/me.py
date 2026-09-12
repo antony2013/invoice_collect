@@ -11,6 +11,7 @@ from sqlalchemy import select
 from app.core.audit import write_audit_log
 from app.core.deps import CurrentUser, DbDep
 from app.core.minio import MinioDep
+from app.core.ratelimit import UploadRateLimit
 from app.models import Client, Invoice, InvoiceFile, User, UserRole
 from app.models.base import utcnow
 from app.models.enums import InvoiceStatus
@@ -20,6 +21,7 @@ from app.modules.invoices.files import (
     UploadDep,
     _object_key,
     _sanitize_filename,
+    _validate_upload,
 )
 from app.modules.invoices.router import (
     _file_response,
@@ -110,6 +112,7 @@ async def _store_file(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             detail="File exceeds the 25 MB size limit",
         )
+    _validate_upload(upload.content_type, data)
 
     original_name = upload.filename or "unnamed"
     object_key = _object_key(
@@ -189,6 +192,7 @@ async def upload_my_invoice(
     db: DbDep,
     storage: MinioDep,
     upload: UploadDep,
+    _: UploadRateLimit,
     notes: Annotated[str | None, Form()] = None,
 ) -> InvoiceDetailResponse:
     """Create a PENDING invoice for the client and attach the uploaded file."""
@@ -214,8 +218,6 @@ async def upload_my_invoice(
         storage=storage,
         upload=upload,
     )
-    db.commit()
-    db.expire(invoice)
 
     write_audit_log(
         db,
@@ -235,6 +237,7 @@ async def upload_my_invoice(
         details={"original_name": file.original_name, "size_bytes": file.size_bytes},
     )
     db.commit()
+    db.expire(invoice)
 
     return _to_detail_response(db, invoice)
 
@@ -250,6 +253,7 @@ async def add_file_to_my_invoice(
     db: DbDep,
     storage: MinioDep,
     upload: UploadDep,
+    _: UploadRateLimit,
 ) -> InvoiceFileResponse:
     """Attach another file to one of the authenticated client's invoices."""
     client = _get_client_or_403(current_user)
@@ -262,7 +266,7 @@ async def add_file_to_my_invoice(
         storage=storage,
         upload=upload,
     )
-    db.commit()
+    db.flush()
     db.refresh(file)
 
     write_audit_log(

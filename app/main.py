@@ -7,8 +7,9 @@ from pathlib import Path
 
 from fastapi import APIRouter, FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, RedirectResponse, Response
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.config import get_settings
 from app.database import engine
@@ -107,7 +108,47 @@ def create_app() -> FastAPI:
         response = await call_next(request)
         if request.url.path.startswith("/ui/static/"):
             response.headers["Cache-Control"] = "no-store"
+        response.headers.setdefault("X-Content-Type-Options", "nosniff")
+        response.headers.setdefault("X-Frame-Options", "DENY")
+        response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+        response.headers.setdefault(
+            "Permissions-Policy",
+            "camera=(), microphone=(), geolocation=()",
+        )
+        if settings.environment == "production":
+            response.headers.setdefault(
+                "Strict-Transport-Security",
+                "max-age=63072000; includeSubDomains",
+            )
         return response
+
+    @app.exception_handler(StarletteHTTPException)
+    async def _http_exception_handler(
+        _request: Request, exc: StarletteHTTPException
+    ) -> Response:
+        headers = getattr(exc, "headers", None)
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"detail": exc.detail if isinstance(exc.detail, str) else "error"},
+            headers=headers,
+        )
+
+    @app.exception_handler(Exception)
+    async def _unhandled_exception_handler(
+        request: Request, exc: Exception
+    ) -> Response:
+        logger.exception(
+            "Unhandled error on %s %s",
+            request.method,
+            request.url.path,
+            exc_info=exc,
+        )
+        if settings.debug:
+            raise exc
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content={"detail": "Internal server error"},
+        )
 
     @app.get("/health", tags=["system"], include_in_schema=False)
     def root_health() -> dict[str, str]:

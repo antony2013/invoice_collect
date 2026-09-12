@@ -1,0 +1,1 @@
+Set-Location "E:\invoice_collect\mobile"; Start-Process -FilePath "cmd" -ArgumentList "/c","npx expo start --host lan --port 8081 > expo.log 2>&1" -WindowStyle Hidden -PassThru | Select-Object -ExpandProperty Id

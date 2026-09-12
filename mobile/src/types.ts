@@ -61,3 +61,55 @@ export interface InvoiceListEnvelope {
   page: number;
   page_size: number;
 }
+
+export interface InvoiceItemPayload {
+  description: string;
+  quantity?: string;
+  unit_price?: string;
+}
+
+export interface InvoiceCreatePayload {
+  client_id: string;
+  invoice_number?: string;
+  invoice_date: string;
+  currency?: string;
+  notes?: string;
+  assigned_to_id?: string | null;
+  items?: InvoiceItemPayload[];
+}
+
+export interface InvoiceUpdatePayload {
+  invoice_date?: string;
+  currency?: string;
+  notes?: string;
+  assigned_to_id?: string | null;
+  status?: Invoice["status"];
+  items?: InvoiceItemPayload[];
+}
+
+export interface Client {
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  address: string | null;
+  is_active: boolean;
+  account_email: string | null;
+}
+
+export interface StaffMember {
+  id: string;
+  email: string;
+  full_name: string;
+  role: "STAFF";
+  is_active: boolean;
+  assigned_invoice_count: number;
+}
+
+export interface ScanPage {
+  id: string;
+  uri: string;
+  width: number;
+  height: number;
+  rotation: number;
+}

@@ -28,10 +28,22 @@ def _connect_args(database_url: str) -> dict[str, bool]:
 _settings = get_settings()
 _engine_url = _make_engine_url(_settings.database_url)
 
+_pool_kwargs: dict[str, object] = {}
+if not _engine_url.startswith("sqlite"):
+    _pool_kwargs.update(
+        {
+            "pool_size": 10,
+            "max_overflow": 20,
+            "pool_timeout": 30,
+            "pool_recycle": 1800,
+        }
+    )
+
 engine = create_engine(
     _engine_url,
     connect_args=_connect_args(_settings.database_url),
     pool_pre_ping=True,
+    **_pool_kwargs,
 )
 
 SessionLocal = sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)

@@ -12,6 +12,7 @@ from app.core.audit import write_audit_log
 from app.core.crud import get_owned_or_404
 from app.core.deps import CurrentUser, DbDep, Owner
 from app.core.minio import MinioDep
+from app.core.ratelimit import UploadRateLimit
 from app.models import Invoice, InvoiceFile, User, UserRole
 from app.modules.invoices.router import _file_response
 from app.modules.invoices.schemas import InvoiceFileResponse
@@ -23,6 +24,55 @@ MAX_UPLOAD_BYTES = 25 * 1024 * 1024
 UploadDep = Annotated[UploadFile, File(...)]
 
 _SAFE_NAME_PATTERN = re.compile(r"[^a-zA-Z0-9._-]")
+
+_ALLOWED_UPLOAD_TYPES = frozenset(
+    {
+        "application/pdf",
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/webp",
+        "image/heic",
+        "image/heif",
+    }
+)
+
+# (offset, bytes, sniffed content-type) — validated against the declared one.
+_MAGIC_SIGNATURES: tuple[tuple[int, bytes, str], ...] = (
+    (0, b"%PDF-", "application/pdf"),
+    (0, b"\xff\xd8\xff", "image/jpeg"),
+    (0, b"\x89PNG\r\n\x1a\n", "image/png"),
+    (0, b"GIF87a", "image/gif"),
+    (0, b"GIF89a", "image/gif"),
+    (0, b"RIFF", "image/webp"),
+)
+
+
+def _validate_upload(content_type: str | None, data: bytes) -> None:
+    """Reject unsupported content types and files whose magic bytes disagree."""
+    declared = (content_type or "").split(";")[0].strip().lower()
+    if declared and declared not in _ALLOWED_UPLOAD_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail="Unsupported file type. Allowed: PDF and image files.",
+        )
+
+    head = data[:12]
+    matched: list[str] = [
+        sniffed for offset, sig, sniffed in _MAGIC_SIGNATURES
+        if head[offset : offset + len(sig)] == sig
+    ]
+    if not matched:
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail="File content does not match a supported format.",
+        )
+    magic_checked = "image/heic" not in declared and "image/heif" not in declared
+    if declared and magic_checked and declared not in matched:
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail="Declared type does not match file content.",
+        )
 
 
 def _sanitize_filename(filename: str) -> str:
@@ -89,6 +139,7 @@ async def upload_invoice_file(
     db: DbDep,
     storage: MinioDep,
     upload: UploadDep,
+    _: UploadRateLimit,
 ) -> InvoiceFileResponse:
     """Upload an invoice file to object storage and register it."""
     org_id = current_user.organization_id
@@ -112,6 +163,7 @@ async def upload_invoice_file(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             detail="File exceeds the 25 MB size limit",
         )
+    _validate_upload(upload.content_type, data)
 
     original_name = upload.filename or "unnamed"
     object_key = _object_key(org_id, invoice, _sanitize_filename(original_name))
@@ -131,7 +183,7 @@ async def upload_invoice_file(
         uploaded_by_id=current_user.id,
     )
     db.add(file)
-    db.commit()
+    db.flush()
     db.refresh(file)
 
     write_audit_log(
@@ -161,6 +213,8 @@ def download_invoice_file(
     _require_file_access(current_user, file.invoice)
     try:
         data = storage.get_object(object_key=file.object_key)
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

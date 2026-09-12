@@ -3,8 +3,10 @@ from __future__ import annotations
 from io import BytesIO
 from typing import Annotated
 
-from fastapi import Depends
+from fastapi import Depends, HTTPException, status
 from minio import Minio
+from minio.error import MinioException, S3Error
+from urllib3.exceptions import HTTPError as UrllibHTTPError
 
 from app.config import Settings, get_settings
 
@@ -38,16 +40,38 @@ class MinioService:
         data: bytes,
         content_type: str | None,
     ) -> None:
-        self.client.put_object(
-            self.bucket,
-            object_key,
-            BytesIO(data),
-            length=len(data),
-            content_type=content_type or "application/octet-stream",
-        )
+        try:
+            self.client.put_object(
+                self.bucket,
+                object_key,
+                BytesIO(data),
+                length=len(data),
+                content_type=content_type or "application/octet-stream",
+            )
+        except S3Error as exc:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=f"Object storage error: {exc.message or 'unavailable'}",
+            ) from exc
+        except (MinioException, OSError, ValueError, UrllibHTTPError) as exc:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Object storage is unavailable. Try again later.",
+            ) from exc
 
     def get_object(self, *, object_key: str) -> bytes:
-        response = self.client.get_object(self.bucket, object_key)
+        try:
+            response = self.client.get_object(self.bucket, object_key)
+        except S3Error as exc:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=f"Object storage error: {exc.message or 'unavailable'}",
+            ) from exc
+        except (MinioException, OSError, ValueError, UrllibHTTPError) as exc:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Object storage is unavailable. Try again later.",
+            ) from exc
         try:
             return response.read()
         finally:
@@ -55,10 +79,29 @@ class MinioService:
             response.release_conn()
 
     def remove_object(self, *, object_key: str) -> None:
-        self.client.remove_object(self.bucket, object_key)
+        try:
+            self.client.remove_object(self.bucket, object_key)
+        except S3Error as exc:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=f"Object storage error: {exc.message or 'unavailable'}",
+            ) from exc
+        except (MinioException, OSError, ValueError, UrllibHTTPError) as exc:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Object storage is unavailable. Try again later.",
+            ) from exc
 
     def object_exists(self, *, object_key: str) -> bool:
-        return self.client.stat_object(self.bucket, object_key) is not None
+        try:
+            return self.client.stat_object(self.bucket, object_key) is not None
+        except S3Error:
+            return False
+        except (MinioException, OSError, ValueError, UrllibHTTPError) as exc:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Object storage is unavailable. Try again later.",
+            ) from exc
 
 
 _service: MinioService | None = None

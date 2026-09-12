@@ -8,38 +8,59 @@ import {
   RefreshControl,
   Alert,
 } from "react-native";
-import { listMyInvoices, setAuthToken } from "../api";
-import { loadToken, clearToken, clearUser } from "../storage";
+import { listMyInvoices, listAllInvoices, setAuthToken } from "../api";
+import { loadToken, clearToken, clearUser, loadUser } from "../storage";
 import { Invoice } from "../types";
 
 type Props = {
   onLogout: () => void;
   onCapture: () => void;
+  onCreateInvoice: () => void;
   onInvoicePress: (id: string) => void;
 };
+
+const STATUS_FILTERS = [
+  { label: "All", value: "" },
+  { label: "Pending", value: "PENDING" },
+  { label: "Processing", value: "PROCESSING" },
+  { label: "Completed", value: "COMPLETED" },
+  { label: "Review", value: "REVIEW" },
+  { label: "Cancelled", value: "CANCELLED" },
+];
 
 export default function HomeScreen({
   onLogout,
   onCapture,
+  onCreateInvoice,
   onInvoicePress,
 }: Props) {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isWorker, setIsWorker] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("");
 
   const fetchInvoices = useCallback(async () => {
     try {
       const token = await loadToken();
       setAuthToken(token);
-      const res = await listMyInvoices();
-      setInvoices(res.items);
+      const user = await loadUser();
+      const worker = user?.role === "OWNER" || user?.role === "STAFF";
+      setIsWorker(worker);
+      if (worker) {
+        const res = await listAllInvoices(statusFilter || undefined);
+        setInvoices(res.items);
+      } else {
+        const res = await listMyInvoices();
+        setInvoices(res.items);
+      }
     } catch (e: any) {
       Alert.alert("Error", e.message);
     } finally {
       setRefreshing(false);
       setLoading(false);
     }
-  }, []);
+  }, [statusFilter]);
 
   useEffect(() => {
     fetchInvoices();
@@ -80,11 +101,31 @@ export default function HomeScreen({
   return (
     <View style={styles.root}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>My Invoices</Text>
+        <Text style={styles.headerTitle}>
+          {isWorker ? "All Invoices" : "My Invoices"}
+        </Text>
         <TouchableOpacity onPress={handleLogout}>
           <Text style={styles.logoutText}>Sign Out</Text>
         </TouchableOpacity>
       </View>
+
+      {isWorker && (
+        <View style={styles.filterRow}>
+          {STATUS_FILTERS.map((f) => (
+            <TouchableOpacity
+              key={f.value}
+              style={[styles.filterChip, statusFilter === f.value && styles.filterChipActive]}
+              onPress={() => setStatusFilter(f.value)}
+            >
+              <Text
+                style={[styles.filterChipText, statusFilter === f.value && styles.filterChipTextActive]}
+              >
+                {f.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
 
       {loading ? (
         <View style={styles.empty}>
@@ -141,7 +182,10 @@ export default function HomeScreen({
         />
       )}
 
-      <TouchableOpacity style={styles.fab} onPress={onCapture}>
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={isWorker ? onCreateInvoice : onCapture}
+      >
         <Text style={styles.fabText}>+</Text>
       </TouchableOpacity>
     </View>
@@ -172,6 +216,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "500",
   },
+  filterRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 2,
+    gap: 6,
+  },
+  filterChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 14,
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+  },
+  filterChipActive: { backgroundColor: "#2563EB", borderColor: "#2563EB" },
+  filterChipText: { fontSize: 12, fontWeight: "500", color: "#374151" },
+  filterChipTextActive: { color: "#fff" },
   list: {
     padding: 16,
     paddingBottom: 100,

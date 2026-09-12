@@ -14,7 +14,18 @@ RUN uv sync --frozen --no-install-project --no-dev
 COPY app ./app
 COPY migrations ./migrations
 COPY alembic.ini ./
+COPY docker/entrypoint.sh ./docker/entrypoint.sh
+RUN chmod +x ./docker/entrypoint.sh
+
+RUN useradd --create-home --uid 1000 appuser \
+    && mkdir -p /app/data \
+    && chown -R appuser:appuser /app
+
+USER appuser
 
 EXPOSE 8000
 
-CMD [".venv/bin/uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 --start-period=15s \
+    CMD ["/app/.venv/bin/python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+
+ENTRYPOINT ["./docker/entrypoint.sh"]

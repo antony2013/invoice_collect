@@ -8,14 +8,16 @@ import {
   Alert,
   ActivityIndicator,
 } from "react-native";
-import { getMyInvoice, downloadFile } from "../api";
-import { Invoice } from "../types";
+import { getMyInvoice, getOrgInvoice, downloadFile, downloadOrgFile } from "../api";
+import { Invoice, User } from "../types";
+import { loadUser } from "../storage";
 import * as FileSystem from "expo-file-system/legacy";
 import * as Sharing from "expo-sharing";
 
 type Props = {
   invoiceId: string;
   onBack: () => void;
+  onEdit?: (id: string) => void;
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -26,15 +28,27 @@ const STATUS_COLORS: Record<string, string> = {
   CANCELLED: "#EF4444",
 };
 
-export default function InvoiceDetailScreen({ invoiceId, onBack }: Props) {
+export default function InvoiceDetailScreen({ invoiceId, onBack, onEdit }: Props) {
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isWorker, setIsWorker] = useState(false);
 
   useEffect(() => {
-    getMyInvoice(invoiceId)
-      .then(setInvoice)
-      .catch((e) => Alert.alert("Error", e.message))
-      .finally(() => setLoading(false));
+    (async () => {
+      try {
+        const user: User | null = await loadUser();
+        const worker = user?.role === "OWNER" || user?.role === "STAFF";
+        setIsWorker(worker);
+        const data = worker
+          ? await getOrgInvoice(invoiceId)
+          : await getMyInvoice(invoiceId);
+        setInvoice(data);
+      } catch (e: any) {
+        Alert.alert("Error", e.message);
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, [invoiceId]);
 
   if (loading) {
@@ -58,7 +72,9 @@ export default function InvoiceDetailScreen({ invoiceId, onBack }: Props) {
 
   async function handleDownload(fileId: string, fileName: string) {
     try {
-      const uri = await downloadFile(invoiceId, fileId);
+      const uri = isWorker
+        ? await downloadOrgFile(invoiceId, fileId)
+        : await downloadFile(invoiceId, fileId);
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(uri);
       } else {
@@ -78,7 +94,13 @@ export default function InvoiceDetailScreen({ invoiceId, onBack }: Props) {
         <Text style={styles.headerTitle} numberOfLines={1}>
           {invoice.invoice_number}
         </Text>
-        <View style={{ width: 40 }} />
+        {isWorker && onEdit ? (
+          <TouchableOpacity onPress={() => onEdit(invoiceId)}>
+            <Text style={styles.editText}>Edit</Text>
+          </TouchableOpacity>
+        ) : (
+          <View style={{ width: 40 }} />
+        )}
       </View>
 
       <ScrollView contentContainerStyle={styles.body}>
@@ -207,6 +229,11 @@ const styles = StyleSheet.create({
   backText: {
     color: "#93C5FD",
     fontSize: 15,
+  },
+  editText: {
+    color: "#93C5FD",
+    fontSize: 15,
+    fontWeight: "600",
   },
   body: {
     padding: 20,

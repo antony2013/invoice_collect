@@ -18,9 +18,10 @@ import { uploadInvoice } from "../api";
 type Props = {
   onDone: () => void;
   onCancel: () => void;
+  onScan: () => void;
 };
 
-export default function UploadScreen({ onDone, onCancel }: Props) {
+export default function UploadScreen({ onDone, onCancel, onScan }: Props) {
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -142,6 +143,14 @@ export default function UploadScreen({ onDone, onCancel }: Props) {
               </View>
             </View>
           )}
+
+          <TouchableOpacity style={styles.scanBtn} onPress={onScan}>
+            <Text style={styles.scanBtnText}>Scan Multiple Pages</Text>
+            <Text style={styles.scanBtnHint}>
+              Capture several photos with the camera and combine them into one
+              PDF file
+            </Text>
+          </TouchableOpacity>
 
           <Text style={styles.label}>Notes (optional)</Text>
           <TextInput
@@ -295,5 +304,23 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
     fontWeight: "600",
+  },
+  scanBtn: {
+    backgroundColor: "#2563EB",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+    alignItems: "center",
+  },
+  scanBtnText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  scanBtnHint: {
+    color: "#BFDBFE",
+    fontSize: 12,
+    marginTop: 4,
+    textAlign: "center",
   },
 });

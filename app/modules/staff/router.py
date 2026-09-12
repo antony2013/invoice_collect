@@ -67,7 +67,7 @@ def create_staff(payload: StaffCreate, owner: Owner, db: DbDep) -> StaffResponse
         role=UserRole.STAFF,
     )
     db.add(staff)
-    db.commit()
+    db.flush()
     db.refresh(staff)
 
     write_audit_log(
