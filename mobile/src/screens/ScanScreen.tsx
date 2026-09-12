@@ -167,11 +167,10 @@ export default function ScanScreen({ onDone, onCancel }: Props) {
           facing={facing}
           flash={flash}
           onCameraReady={() => setCameraReady(true)}
-        >
-          <View style={styles.pageCountBadge}>
-            <Text style={styles.pageCountText}>{pages.length} page{pages.length === 1 ? "" : "s"}</Text>
-          </View>
-        </CameraView>
+        />
+        <View style={styles.pageCountBadge}>
+          <Text style={styles.pageCountText}>{pages.length} page{pages.length === 1 ? "" : "s"}</Text>
+        </View>
       </View>
 
       <View style={styles.thumbStrip}>
@@ -310,6 +309,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 6,
+    zIndex: 1,
   },
   pageCountText: {
     color: "#fff",
