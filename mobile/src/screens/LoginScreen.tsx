@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { setAuthToken, setBaseUrl, getBaseUrl } from "../api";
 import { login } from "../api";
-import { saveToken, saveUser, saveUrl, loadUrl } from "../storage";
+import { saveToken, saveUser, saveUrl } from "../storage";
 
 type Props = {
   onLogin: () => void;
@@ -23,12 +23,6 @@ export default function LoginScreen({ onLogin }: Props) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    loadUrl().then((u) => {
-      if (u) setApiUrl(u);
-    });
-  }, []);
 
   async function handleLogin() {
     if (!email || !password) {
