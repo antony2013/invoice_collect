@@ -10,7 +10,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from "react-native";
-import { setAuthToken } from "../api";
+import { setAuthToken, setBaseUrl, getBaseUrl } from "../api";
 import { login } from "../api";
 import { saveToken, saveUser, saveUrl, loadUrl } from "../storage";
 
@@ -19,7 +19,7 @@ type Props = {
 };
 
 export default function LoginScreen({ onLogin }: Props) {
-  const [apiUrl, setApiUrl] = useState("http://192.168.1.13:8001/api/v1");
+  const [apiUrl, setApiUrl] = useState(getBaseUrl());
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -37,6 +37,7 @@ export default function LoginScreen({ onLogin }: Props) {
     }
     setLoading(true);
     try {
+      setBaseUrl(apiUrl.trim());
       const res = await login(email, password);
       setAuthToken(res.access_token);
       await saveToken(res.access_token);

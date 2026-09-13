@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { StatusBar } from "expo-status-bar";
-import { setAuthToken, setBaseUrl } from "./src/api";
-import { loadToken, loadUser, loadUrl, clearToken, clearUser } from "./src/storage";
+import { setAuthToken } from "./src/api";
+import { loadToken, loadUser, clearToken, clearUser } from "./src/storage";
 import { ScanPage, User } from "./src/types";
 import LoginScreen from "./src/screens/LoginScreen";
 import HomeScreen from "./src/screens/HomeScreen";
@@ -29,9 +29,6 @@ export default function App() {
 
   useEffect(() => {
     (async () => {
-      const url = await loadUrl();
-      if (url) setBaseUrl(url);
-
       const token = await loadToken();
       const storedUser = await loadUser();
 
